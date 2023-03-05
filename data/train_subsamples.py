@@ -22,8 +22,8 @@ def copy_data(number_per_class, dirs, subtrain_per_class):
     for directory in dirs:
         directory_path = os.path.join(train_path, directory)
         filenames = get_all_files(directory_path)
-        filenames = random.sample(filenames, number_per_class)
-        assert len(filenames)==number_per_class
+        if len(filenames)>number_per_class:
+            filenames = random.sample(filenames, number_per_class)
         
         os.system(f"mkdir {os.path.join(subtrain_per_class, directory)}")
         
