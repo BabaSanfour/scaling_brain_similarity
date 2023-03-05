@@ -21,8 +21,6 @@ import numpy as np
 from tqdm import tqdm
 import torchvision
 from PIL import Image
-path = '$SLURM_TMPDIR/work/'
-
 
 def store_many_hdf5(images, labels, folder):
     """ Stores an array of images to HDF5.
@@ -44,8 +42,7 @@ def store_many_hdf5(images, labels, folder):
     file.close()
     print("{} h5 is ready".format(folder))
 
-def make_array(data_folder):
-    dir = os.path.join(path, data_folder)
+def make_array(dir):
     # Concatenate array of images
     img_array = []
     label_array = []
@@ -61,6 +58,7 @@ def make_array(data_folder):
     )
     # run through the ids list / folders list
     loop_generator = tqdm(samples_pathes)
+    i =0
     for  id in loop_generator:
         # extract all the pictures of a single id / in a folder
         pictures_pathes = sorted(
@@ -69,9 +67,6 @@ def make_array(data_folder):
                 for sname in os.listdir(id)
             ]
         )
-
-        # get pictures id ( all pictures in the same folder has the same id)
-        pic_id=os.path.basename(id)
         # run through the pictures list
         pictures_loop_generator = tqdm(pictures_pathes)
         for  picture in pictures_loop_generator:
@@ -84,7 +79,8 @@ def make_array(data_folder):
             sample = np.asarray(resize(PIL_image), dtype=np.uint8)
             # append image and label to image and labels list
             img_array.append(sample)
-            label_array.append(int(pic_id))
+            label_array.append(i)
+        i+=1
 
     # print label and image array shapes
     print(np.asarray(label_array).shape)
@@ -93,7 +89,7 @@ def make_array(data_folder):
     return np.asarray(img_array), np.asarray(label_array)
 
 if __name__ == '__main__':
-    for folder in ["1","10","100", "1000"] :
+    for folder in ['1', '10', '100', '1000'] :
         begin_time = datetime.datetime.now()
         img_array, label_array = make_array(folder)
         store_many_hdf5(img_array,label_array, folder)
