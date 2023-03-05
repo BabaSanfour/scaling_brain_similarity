@@ -21,9 +21,8 @@ import numpy as np
 from tqdm import tqdm
 import torchvision
 from PIL import Image
-sys.path.append("../../MFRS")
-from utils.config import data_path
-data_path =  os.path.join(data_path, "VGGface2/")
+path = '$SLURM_TMPDIR/work/'
+
 
 def store_many_hdf5(images, labels, folder):
     """ Stores an array of images to HDF5.
@@ -32,7 +31,7 @@ def store_many_hdf5(images, labels, folder):
         images       images array, (N, 224, 224, 1) to be stored
         labels       labels array, (N, ) to be stored
     """
-    hdf5_dir = "/home/hamza97/scratch/data/MFRS_data/hdf5/"
+    hdf5_dir = "/home/hamza97/scratch/data/scaling_data/hdf5/"
     if not os.path.exists(hdf5_dir):
         os.makedirs(hdf5_dir)
     # Create a new HDF5 file
@@ -46,7 +45,7 @@ def store_many_hdf5(images, labels, folder):
     print("{} h5 is ready".format(folder))
 
 def make_array(data_folder):
-    dir = data_path+data_folder+"/"
+    dir = os.path.join(path, data_folder)
     # Concatenate array of images
     img_array = []
     label_array = []
@@ -94,8 +93,8 @@ def make_array(data_folder):
     return np.asarray(img_array), np.asarray(label_array)
 
 if __name__ == '__main__':
-    begin_time = datetime.datetime.now()
-    for folder in ["valid","test","train"] :
+    for folder in ["1","10","100", "1000"] :
+        begin_time = datetime.datetime.now()
         img_array, label_array = make_array(folder)
         store_many_hdf5(img_array,label_array, folder)
-    print(datetime.datetime.now()-begin_time)
+        print(datetime.datetime.now()-begin_time)
