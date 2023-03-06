@@ -47,12 +47,15 @@ def dataloader(batch_n, num_pictures=1):
                                         torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
                                         torchvision.transforms.Normalize(mean=[mean], std=[std])]))
 
+    valid_dataset, test_dataset = torch.utils.data.random_split(valid_dataset, [25000, 25000])
 
     # ##Test dataset
-    dataset_loader = {'train': torch.utils.data.DataLoader(train_dataset, batch_size=batch_n, num_workers=-1, shuffle=True),
-                      'valid': torch.utils.data.DataLoader(valid_dataset, batch_size=batch_n, num_workers=-1, shuffle=True),
+    dataset_loader = {'train': torch.utils.data.DataLoader(train_dataset, batch_size=batch_n, num_workers=4, shuffle=True),
+                      'valid': torch.utils.data.DataLoader(valid_dataset, batch_size=batch_n, num_workers=4, shuffle=True),
+                      'test': torch.utils.data.DataLoader(test_dataset, batch_size=batch_n, num_workers=4, shuffle=True),
+
                       }
 
-    dataset_sizes = {'train': len(train_dataset), 'valid' : len(valid_dataset)}
+    dataset_sizes = {'train': len(train_dataset), 'valid' : len(valid_dataset), 'test': len(test_dataset)}
 
     return dataset_loader, dataset_sizes
