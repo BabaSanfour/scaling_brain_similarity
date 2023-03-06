@@ -2,9 +2,7 @@ import os
 import time
 import random
 
-train_path = '$SLURM_TMPDIR/work/ILSVRC/Data/CLS-LOC/train/'
-os.system(f'pwd')
-os.system(f'ls')
+train_path = 'ILSVRC/Data/CLS-LOC/train/'
 
 def get_all_files(directory):
     filenames = []
@@ -39,7 +37,7 @@ if __name__ == '__main__':
 
     dirs = [d for d in os.listdir(train_path) if os.path.isdir(os.path.join(train_path, d))]
     print('Number of classes: ', len(dirs))
-    new_train_path = '../../imagenet_subtrain/'
+    new_train_path = 'imagenet_subtrain/'
     os.system(f'rm -rf {new_train_path}')
     os.system(f'mkdir {new_train_path}')
     for number_per_class in [1, 10, 100, 1000]:
