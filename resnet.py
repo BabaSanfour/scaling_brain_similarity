@@ -1,15 +1,11 @@
 """
 ResNet networks
 """
-import sys
 import torch
 from torch import Tensor
 import torch.nn as nn
 from collections import OrderedDict
 from typing import Type, Any, Callable, Union, List, Optional
-sys.path.append('../../scaling_brain_sim/')
-# TO DO
-from utils.load_weights import load_weights
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
     """3x3 convolution with padding"""
@@ -259,62 +255,24 @@ class ResNet(nn.Module):
         return self._forward_impl(x)
 
 
-def resnet18(
-    pretrained: bool = False,
-    num_classes: int = 1000,
-    n_input_channels: int = 3,
-    weights: str = None,
-    **kwargs: Any
-) -> ResNet:
-    model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes, n_input_channels, **kwargs)
-    if pretrained:
-        return load_weights('resnet18', model, n_input_channels, weights)
-    return model
+def resnet(
+        block: str="basic",
+        layers: List[int] = [2, 2, 2, 2],
+        num_classes: int = 1000,
+        n_input_channels: int = 3,
+        **kwargs: Any
+    ) -> ResNet:
+    """
+        Famous resnet architectures:
+        ResNet18: BasicBlock, [2, 2, 2, 2]
+        ResNet34: BasicBlock, [3, 4, 6, 3]
+        ResNet50: Bottleneck, [3, 4, 6, 3]
+        ResNet101: Bottleneck, [3, 4, 23, 3]
+        ResNet152: Bottleneck, [3, 8, 36, 3]
 
-def resnet34(
-    pretrained: bool = False,
-    num_classes: int = 1000,
-    n_input_channels: int = 3,
-    weights: str = None,
-    **kwargs: Any
-) -> ResNet:
-    model = ResNet(BasicBlock, [3, 4, 6, 3], num_classes, n_input_channels, **kwargs)
-    if pretrained:
-        return load_weights('resnet34', model, n_input_channels, weights)
-    return model
-
-def resnet50(
-    pretrained: bool = False,
-    num_classes: int = 1000,
-    n_input_channels: int = 3,
-    weights: str = None,
-    **kwargs: Any
-) -> ResNet:
-    model = ResNet(Bottleneck, [3, 4, 6, 3], num_classes, n_input_channels, **kwargs)
-    if pretrained:
-        return load_weights('resnet50', model, n_input_channels, weights)
-    return model
-
-def resnet101(
-    pretrained: bool = False,
-    num_classes: int = 1000,
-    n_input_channels: int = 3,
-    weights: str = None,
-    **kwargs: Any
-) -> ResNet:
-    model = ResNet(Bottleneck, [3, 4, 23, 3], num_classes, n_input_channels, **kwargs)
-    if pretrained:
-        return load_weights('resnet101', model, n_input_channels, weights)
-    return model
-
-def resnet152(
-    pretrained: bool = False,
-    num_classes: int = 1000,
-    n_input_channels: int = 3,
-    weights: str = None,
-    **kwargs: Any
-) -> ResNet:
-    model = ResNet(Bottleneck, [3, 8, 36, 3], num_classes, n_input_channels, **kwargs)
-    if pretrained:
-        return load_weights('resnet152', model, n_input_channels, weights)
-    return model
+    """
+    if block=="basic":
+        model = ResNet(BasicBlock, layers, num_classes, n_input_channels, **kwargs)
+    else:
+        model = ResNet(Bottleneck, layers, num_classes, n_input_channels, **kwargs)
+    raise model
