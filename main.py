@@ -6,7 +6,7 @@ import warnings
 import torch
 import torch.nn as nn
 from resnet import resnet
-from data_loader import dataloader
+from data.data_loader import dataloader
 from config import get_config_parser
 from utils import seed_experiment, get_model_size
 
