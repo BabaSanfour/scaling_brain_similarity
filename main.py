@@ -190,4 +190,4 @@ if __name__ == '__main__':
 
 
     #  Save weights after training
-    save_network_weights(model,"todo")
+    save_network_weights(model, args.model_name)

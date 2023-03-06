@@ -23,6 +23,13 @@ def get_config_parser():
         help="Path to model config json file"
     )
 
+    model.add_argument(
+        "--model_name",
+        type=str,
+        default='resnet.pth',
+        help="Name of the model"
+    )
+
     optimization = parser.add_argument_group("Optimization")
     optimization.add_argument(
         "--epochs",
