@@ -4,7 +4,7 @@
     ---------------
     Output Files:
     ---------------
-    3 HDF5 files for each data repartition set: in data/MFRS_data/HDF5_files:Train, valid and test sets
+    four HDF5 files for each data training-repartitions: 1, 10, 100, 1000 samples per class
     Parameters:
     images       images array, (N, 224, 224, 3) to be stored
     labels       labels array, (N, ) to be stored
@@ -26,7 +26,7 @@ def store_many_hdf5(images, labels, folder):
     """ Stores an array of images to HDF5.
         Parameters:
         ---------------
-        images       images array, (N, 224, 224, 1) to be stored
+        images       images array, (N, 224, 224, 3) to be stored
         labels       labels array, (N, ) to be stored
     """
     hdf5_dir = "/home/hamza97/scratch/data/scaling_data/hdf5/"
