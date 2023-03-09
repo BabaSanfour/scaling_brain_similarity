@@ -14,6 +14,7 @@ def train_network(model, criterion, optimizer, epochs, dataset_loader, dataset_s
     best_acc = -1.0 
     list_trainLoss, list_trainAcc, list_valLoss, list_valAcc  = [], [], [], []
     since = time.time()
+    steps=0
     for epoch in range(epochs):
         tqdm.write(f"====== Epoch {epoch} ======>")
         n_correct = 0 #correct predictions train
@@ -22,6 +23,7 @@ def train_network(model, criterion, optimizer, epochs, dataset_loader, dataset_s
         with torch.set_grad_enabled(True):
             model.train()
             for inputs_, labels_ in dataset_loader["train"]:
+                steps+=1
                 inputs = inputs_.to(device)
                 labels = labels_.to(device)
                 optimizer.zero_grad()
@@ -59,13 +61,14 @@ def train_network(model, criterion, optimizer, epochs, dataset_loader, dataset_s
                     best_acc= valid_acc
                     best_model = model
             wandb.log({"Val Loss": valid_loss, "Val Acc": valid_acc, 
-                    "Train Loss": train_loss, "Train Acc": train_acc})
+                    "Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
         else:
-            wandb.log({"Train Loss": train_loss, "Train Acc": train_acc})
+            wandb.log({"Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
     print()
     time_elapsed = time.time() - since
     print(f'Training complete in {time_elapsed // 3600} h {(time_elapsed % 3600) // 60} m {time_elapsed % 60} s')
     print(f'BEST VALID ACC: {valid_acc:.3f}')
+    print(f'Total steps: {steps}.')
     return best_model, wandb
     
 def test_network(model, dataset_loader, dataset_sizes, device):
