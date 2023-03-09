@@ -71,7 +71,7 @@ def train_network(model, criterion, optimizer, epochs, dataset_loader, dataset_s
     print(f'Training complete in {time_elapsed // 3600} h {(time_elapsed % 3600) // 60} m {time_elapsed % 60} s')
     print(f'BEST VALID ACC: {valid_acc:.3f}')
     print(f'Total steps: {steps}.')
-    print(f'Steps required to reach best performance: {steps}.')
+    print(f'Steps required to reach best performance: {best_acc_steps}.')
     return best_model, wandb
     
 def test_network(model, dataset_loader, dataset_sizes, device):
