@@ -256,8 +256,9 @@ class ResNet(nn.Module):
 
 
 def resnet(
-        block: str="basic",
-        layers: List[int] = [2, 2, 2, 2],
+        width_per_group: int = 64,
+        block: str="Bottleneck",
+        layers: List[int] = [3, 4, 6, 3],
         num_classes: int = 1000,
         n_input_channels: int = 3,
         **kwargs: Any
@@ -274,5 +275,5 @@ def resnet(
     if block=="basic":
         model = ResNet(BasicBlock, layers, num_classes, n_input_channels, **kwargs)
     else:
-        model = ResNet(Bottleneck, layers, num_classes, n_input_channels, **kwargs)
-    raise model
+        model = ResNet(Bottleneck, layers, num_classes, n_input_channels, width_per_group, **kwargs)
+    return model
