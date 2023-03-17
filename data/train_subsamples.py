@@ -21,12 +21,11 @@ def copy_data(scaling_factor, dirs, subtrain_per_class):
         directory_path = os.path.join(train_path, directory)
         filenames = get_all_files(directory_path)
         original_number_images_per_class = len(filenames)
-        new_number_images_per_class = original_number_images_per_class*2^(-scaling_factor)
+        new_number_images_per_class = original_number_images_per_class/(2**scaling_factor)
         if len(filenames)>new_number_images_per_class:
             filenames = random.sample(filenames, new_number_images_per_class)
         total_images_per_scaling_factor += len(filenames)
         os.system(f"mkdir {os.path.join(subtrain_per_class, directory)}")
-        
         for filename in filenames:
             src_file_path = os.path.join(train_path, directory, filename)
             tgt_file_path = os.path.join(subtrain_per_class,  directory, filename)
@@ -50,5 +49,3 @@ if __name__ == '__main__':
         os.system(f'rm -rf {subtrain_per_class}')
         os.system(f'mkdir {subtrain_per_class}')
         copy_data(scaling_factor, dirs, subtrain_per_class)
-
-
