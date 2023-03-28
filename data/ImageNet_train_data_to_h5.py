@@ -89,7 +89,8 @@ def make_array(dir):
     return np.asarray(img_array), np.asarray(label_array)
 
 if __name__ == '__main__':
-    for folder in ['1', '10', '100', '1000'] :
+    for scale in range(7) :
+        folder = f"scaling_factor_{scale}"
         begin_time = datetime.datetime.now()
         img_array, label_array = make_array(folder)
         store_many_hdf5(img_array,label_array, folder)
