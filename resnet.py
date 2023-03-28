@@ -140,9 +140,9 @@ class ResNet(nn.Module):
         layers: List[int],
         num_classes: int = 1000,
         n_input_channels: int = 3,
+        width_per_group: int = 64,
         zero_init_residual: bool = False,
         groups: int = 1,
-        width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
@@ -165,7 +165,6 @@ class ResNet(nn.Module):
             )
         self.groups = groups
         self.base_width = width_per_group
-
         self.model = nn.Sequential(OrderedDict([
                         ('conv1',  nn.Conv2d(n_input_channels, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)),
                         ('bn1', norm_layer(self.inplanes)),
