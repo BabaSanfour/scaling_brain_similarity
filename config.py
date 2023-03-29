@@ -5,14 +5,14 @@ def get_config_parser():
 
     data = parser.add_argument_group("Data")
     data.add_argument(
-        "--batch_size", type=int, default=128, help="batch size (default: %(default)s)."
+        "--batch_size", type=int, default=32, help="batch size (default: %(default)s)."
     )
     data.add_argument(
-        "--number_pictures_per_class", 
-        type=str, 
-        choices=['1', '10', '100', '1000'],
-        default='100', 
-        help="Number of pictures per class(default: %(default)s)."
+        "--scaling_factor", 
+        type=int, 
+        choices=[0, 1, 2, 3, 4, 5, 6],
+        default=6, 
+        help="Scaling factor(default: %(default)s)."
     )
 
     model = parser.add_argument_group("Model")
@@ -47,7 +47,7 @@ def get_config_parser():
     optimization.add_argument(
         "--lr",
         type=float,
-        default=1e-3,
+        default=1e-2,
         help="learning rate optimizer (default: %(default)s).",
     )
     optimization.add_argument(
