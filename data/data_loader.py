@@ -28,24 +28,24 @@ class generate_Dataset_h5(Dataset):
 
         return sample, label
 
-def dataloader(batch_n, num_pictures=1):
+def dataloader(batch_n, scaling_fac=1):
     """Return datasets train and valid"""
     # Argument :
     # batch_n : batch_size
     # Num pictures : pictures
-    train_path = "%s.h5"%(num_pictures)
+    train_path = f"scaling_fac_{scaling_fac}.h5"
     valid_path = "val.h5"
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
     # ##Training dataset
     train_dataset = generate_Dataset_h5(train_path,
                                         torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
-                                        torchvision.transforms.Normalize(mean=[mean], std=[std])]))
+                                        torchvision.transforms.Normalize(mean=mean, std=std)]))
 
     # ##Validation dataset
     valid_dataset = generate_Dataset_h5(valid_path,
                                         torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
-                                        torchvision.transforms.Normalize(mean=[mean], std=[std])]))
+                                        torchvision.transforms.Normalize(mean=mean, std=std)]))
 
     valid_dataset, test_dataset = torch.utils.data.random_split(valid_dataset, [25000, 25000])
 

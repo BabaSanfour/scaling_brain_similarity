@@ -90,7 +90,7 @@ def make_array(dir):
 
 if __name__ == '__main__':
     for scale in range(7) :
-        folder = f"scaling_factor_{scale}"
+        folder = f"scaling_fac_{scale}"
         begin_time = datetime.datetime.now()
         img_array, label_array = make_array(folder)
         store_many_hdf5(img_array,label_array, folder)
