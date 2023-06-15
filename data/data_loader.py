@@ -28,7 +28,8 @@ class generate_Dataset_h5(Dataset):
 
         return sample, label
 
-def dataloader(batch_n, scaling_fac=1):
+
+def dataloader(batch_n, scaling_fac=1, data_aug=False):
     """Return datasets train and valid"""
     # Argument :
     # batch_n : batch_size
@@ -41,6 +42,17 @@ def dataloader(batch_n, scaling_fac=1):
     train_dataset = generate_Dataset_h5(train_path,
                                         torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
                                         torchvision.transforms.Normalize(mean=mean, std=std)]))
+
+    if data_aug:
+        transforms_list = [
+            torchvision.transforms.RandomResizedCrop(32, scale=(0.08, 1.)),
+            torchvision.transforms.RandomHorizontalFlip(p=0.5),
+            torchvision.transforms.RandomApply([torchvision.transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
+            torchvision.transforms.RandomGrayscale(p=0.2),
+            torchvision.transforms.Normalize(mean=mean, std=std)
+            ]
+        augmented_dataset = generate_Dataset_h5(train_path, torchvision.transforms.Compose(transforms_list))
+        train_dataset = torch.utils.data.ConcatDataset([train_dataset, augmented_dataset])
 
     # ##Validation dataset
     valid_dataset = generate_Dataset_h5(valid_path,
