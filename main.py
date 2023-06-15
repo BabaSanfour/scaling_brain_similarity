@@ -134,21 +134,6 @@ if __name__ == '__main__':
     # Loss function
     criterion = torch.nn.CrossEntropyLoss()
     best_acc=-1.0
-    wandb.init(
-            # set the wandb project where this run will be logged
-            project="Scaling AI-Brain similarity",
-            
-            # track hyperparameters and run metadata
-            config={
-            "learning_rate": args.lr,
-            "epochs": args.epochs,
-            "batch_size": args.batch_size,
-            "Optimizer": args.optimizer, 
-            "Total param": get_model_size(model, False),
-            "Trainable param": get_model_size(model, True),
-            }
-        )
-
 
     # Optimizer
     if args.optimizer == "adamw":
@@ -179,10 +164,25 @@ if __name__ == '__main__':
     print(
         f"train Dataset size {dataset_sizes['train']}."
     )
-
-
     print(
         f"scaling factor {args.scaling_factor}."
+    )
+
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="Scaling AI-Brain similarity",
+        
+        # track hyperparameters and run metadata
+        config={
+        "learning_rate": args.lr,
+        "epochs": args.epochs,
+        "batch_size": args.batch_size,
+        "Optimizer": args.optimizer, 
+        "Total param": get_model_size(model, False),
+        "Trainable param": get_model_size(model, True),
+        "Train Dataset size": dataset_sizes['train'],
+        "scaling factor": args.scaling_factor,
+        }
     )
 
     ###Training & Validation###
