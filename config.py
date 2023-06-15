@@ -14,6 +14,13 @@ def get_config_parser():
         default=6, 
         help="Scaling factor(default: %(default)s)."
     )
+    data.add_argument(
+        "--data_aug", 
+        type=bool, 
+        default=False, 
+        help="Adding data augmentation"
+    )
+
 
     model = parser.add_argument_group("Model")
     model.add_argument(

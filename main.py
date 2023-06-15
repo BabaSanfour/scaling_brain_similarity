@@ -173,8 +173,13 @@ if __name__ == '__main__':
         f"Initialized model with {get_model_size(model, False)} "
         f"total parameters, of which {get_model_size(model, True)} are learnable."
     )
+
     #DATA
-    dataset_loader, dataset_sizes = dataloader(args.batch_size, args.scaling_factor)
+    dataset_loader, dataset_sizes = dataloader(args.batch_size, args.scaling_factor, args.data_aug)
+    print(
+        f"train Dataset size {dataset_sizes['train']}."
+    )
+
 
     print(
         f"scaling factor {args.scaling_factor}."
