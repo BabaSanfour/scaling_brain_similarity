@@ -45,6 +45,7 @@ def dataloader(batch_n, scaling_fac=1, data_aug=False, times=1):
 
     if data_aug:
         transforms_list = [
+            torchvision.transforms.ToTensor(),
             torchvision.transforms.RandomResizedCrop(32, scale=(0.08, 1.)),
             torchvision.transforms.RandomHorizontalFlip(p=0.5),
             torchvision.transforms.RandomApply([torchvision.transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
