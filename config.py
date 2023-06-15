@@ -20,6 +20,13 @@ def get_config_parser():
         default=False, 
         help="Adding data augmentation"
     )
+    data.add_argument(
+        "--times", 
+        type=int, 
+        choices=[1, 2],
+        default=False, 
+        help="How many times to augment the data"
+    )
 
 
     model = parser.add_argument_group("Model")

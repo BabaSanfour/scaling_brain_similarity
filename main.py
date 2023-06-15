@@ -160,7 +160,7 @@ if __name__ == '__main__':
     )
 
     #DATA
-    dataset_loader, dataset_sizes = dataloader(args.batch_size, args.scaling_factor, args.data_aug)
+    dataset_loader, dataset_sizes = dataloader(args.batch_size, args.scaling_factor, args.data_aug, args.times)
     print(
         f"train Dataset size {dataset_sizes['train']}."
     )

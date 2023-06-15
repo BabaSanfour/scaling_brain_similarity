@@ -29,7 +29,7 @@ class generate_Dataset_h5(Dataset):
         return sample, label
 
 
-def dataloader(batch_n, scaling_fac=1, data_aug=False):
+def dataloader(batch_n, scaling_fac=1, data_aug=False, times=1):
     """Return datasets train and valid"""
     # Argument :
     # batch_n : batch_size
@@ -51,8 +51,9 @@ def dataloader(batch_n, scaling_fac=1, data_aug=False):
             torchvision.transforms.RandomGrayscale(p=0.2),
             torchvision.transforms.Normalize(mean=mean, std=std)
             ]
-        augmented_dataset = generate_Dataset_h5(train_path, torchvision.transforms.Compose(transforms_list))
-        train_dataset = torch.utils.data.ConcatDataset([train_dataset, augmented_dataset])
+        for _ in range(times):
+            augmented_dataset = generate_Dataset_h5(train_path, torchvision.transforms.Compose(transforms_list))
+            train_dataset = torch.utils.data.ConcatDataset([train_dataset, augmented_dataset])
 
     # ##Validation dataset
     valid_dataset = generate_Dataset_h5(valid_path,
@@ -64,8 +65,7 @@ def dataloader(batch_n, scaling_fac=1, data_aug=False):
     # ##Test dataset
     dataset_loader = {'train': torch.utils.data.DataLoader(train_dataset, batch_size=batch_n, num_workers=4, shuffle=True),
                       'valid': torch.utils.data.DataLoader(valid_dataset, batch_size=batch_n, num_workers=4, shuffle=True),
-                      'test': torch.utils.data.DataLoader(test_dataset, batch_size=batch_n, num_workers=4, shuffle=True),
-
+                      'test': torch.utils.data.DataLoader(test_dataset, batch_size=batch_n, num_workers=4, shuffle=False),
                       }
 
     dataset_sizes = {'train': len(train_dataset), 'valid' : len(valid_dataset), 'test': len(test_dataset)}
