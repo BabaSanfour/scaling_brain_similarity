@@ -177,7 +177,6 @@ if __name__ == '__main__':
     dataset_loader, dataset_sizes = dataloader(args.batch_size, args.scaling_factor)
 
     print(
-        f"Loaded data of around {int(1300/args.scaling_factor)} picture"
         f"scaling factor {args.scaling_factor}."
     )
 
