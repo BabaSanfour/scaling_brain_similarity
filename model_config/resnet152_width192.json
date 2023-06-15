@@ -1,0 +1,5 @@
+{
+    "block": "Bottleneck",
+    "layers": [3, 4, 36, 3],
+    "width_per_group": 192
+}
