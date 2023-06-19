@@ -9,13 +9,14 @@ from data.data_loader import dataloader
 from config import get_config_parser
 from utils import seed_experiment, get_model_size
 
-def train_network(model, criterion, optimizer, epochs, dataset_loader, dataset_sizes, device, wandb, valid=True):
+
+def train_network(model, criterion, optimizer, starting_epoch, epochs, dataset_loader, dataset_sizes, device, wandb,  save_checkpoint, checkpoint_path, valid=True):
     best_acc = -1.0 
     list_trainLoss, list_trainAcc, list_valLoss, list_valAcc  = [], [], [], []
     since = time.time()
     steps=0
     best_acc_steps=0
-    for epoch in range(epochs):
+    for epoch in range(starting_epoch, epochs):
         print(f"====== Epoch {epoch} ======>")
         n_correct = 0 #correct predictions train
         running_loss = 0.0 # train loss
@@ -65,6 +66,10 @@ def train_network(model, criterion, optimizer, epochs, dataset_loader, dataset_s
                     "Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
         else:
             wandb.log({"Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
+        
+        if save_checkpoint:
+            save_checkpoints(epoch, model, optimizer, checkpoint_path)            
+
     print()
     time_elapsed = time.time() - since
     print(f'Training complete in {time_elapsed // 3600} h {(time_elapsed % 3600) // 60} m {time_elapsed % 60} s')
@@ -72,7 +77,8 @@ def train_network(model, criterion, optimizer, epochs, dataset_loader, dataset_s
     print(f'Total steps: {steps}.')
     print(f'Steps required to reach best performance: {best_acc_steps}.')
     return best_model, wandb
-    
+
+
 def test_network(model, dataset_loader, dataset_sizes, device):
     model.eval()
     n_dev_correct=0
@@ -91,10 +97,21 @@ def test_network(model, dataset_loader, dataset_sizes, device):
     print(f'TEST Accuracy (Top1): {avg_test_acc:.3f}')
     return avg_test_acc
 
+
+def save_checkpoints(epoch, model, optimizer, loss, file) :
+    """Save checkpoints during training"""
+    torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            }, file)
+
+
 def save_network_weights(model_ft,  file) :
     """Save the network after training"""
     state = model_ft.state_dict()
     torch.save(state, file)
+
 
 if __name__ == '__main__':
     parser = get_config_parser()
@@ -133,7 +150,6 @@ if __name__ == '__main__':
 
     # Loss function
     criterion = torch.nn.CrossEntropyLoss()
-    best_acc=-1.0
 
     # Optimizer
     if args.optimizer == "adamw":
@@ -168,6 +184,13 @@ if __name__ == '__main__':
         f"scaling factor {args.scaling_factor}."
     )
 
+    starting_epoch = 0
+    if args.load_checkpoint:
+        checkpoint = torch.load(args.checkpoint_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        starting_epoch = checkpoint['epoch']+1
+
     wandb.init(
         # set the wandb project where this run will be logged
         project="Scaling AI-Brain similarity",
@@ -175,7 +198,9 @@ if __name__ == '__main__':
         # track hyperparameters and run metadata
         config={
         "learning_rate": args.lr,
+        "Starting epoch": args.starting_epoch,
         "epochs": args.epochs,
+        "Resume Training": args.load_checkpoint,
         "batch_size": args.batch_size,
         "Optimizer": args.optimizer, 
         "Total param": get_model_size(model, False),
@@ -186,7 +211,7 @@ if __name__ == '__main__':
     )
 
     ###Training & Validation###
-    model_ft, wandb = train_network(model, criterion, optimizer, args.epochs, dataset_loader, dataset_sizes, args.device, wandb)
+    model_ft, wandb = train_network(model, criterion, optimizer, starting_epoch, args.epochs, dataset_loader, dataset_sizes, args.device, wandb, args.save_checkpoint, args.checkpoint_path)
     ###Testing###
     acc=test_network(model_ft, dataset_loader, dataset_sizes, args.device)
     wandb.log ({"Test Acc": acc})

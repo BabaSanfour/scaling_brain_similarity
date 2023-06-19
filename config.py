@@ -36,7 +36,6 @@ def get_config_parser():
         default='./model_configs/resnet50.json',
         help="Path to model config json file"
     )
-
     model.add_argument(
         "--model_name",
         type=str,
@@ -75,6 +74,26 @@ def get_config_parser():
         type=float,
         default=5e-4,
         help="weight decay (default: %(default)s).",
+    )
+
+    model = parser.add_argument_group("Checkpoints")
+    optimization.add_argument(
+        "--load_checkpoint",
+        type=bool,
+        default=False,
+        help="If we will load a saved checkpoint and continue training (default: %(default)s).",
+    )
+    optimization.add_argument(
+        "--save_checkpoint",
+        type=bool,
+        default=False,
+        help="Save a checkpoint at every epoch (default: %(default)s).",
+    )
+    optimization.add_argument(
+        "--checkpoint_path",
+        type=str,
+        default="checkpoint.pth",
+        help="checkpoint file path (default: %(default)s).",
     )
 
     exp = parser.add_argument_group("Experiment config")
