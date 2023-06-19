@@ -198,7 +198,7 @@ if __name__ == '__main__':
         # track hyperparameters and run metadata
         config={
         "learning_rate": args.lr,
-        "Starting epoch": args.starting_epoch,
+        "Starting epoch": starting_epoch,
         "epochs": args.epochs,
         "Resume Training": args.load_checkpoint,
         "batch_size": args.batch_size,
