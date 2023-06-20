@@ -98,7 +98,7 @@ def test_network(model, dataset_loader, dataset_sizes, device):
     return avg_test_acc
 
 
-def save_checkpoints(epoch, model, optimizer, loss, file) :
+def save_checkpoints(epoch, model, optimizer, file) :
     """Save checkpoints during training"""
     torch.save({
             'epoch': epoch,
