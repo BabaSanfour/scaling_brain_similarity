@@ -42,6 +42,14 @@ def get_config_parser():
         default='resnet.pth',
         help="Name of the model"
     )
+    model.add_argument(
+        "--model_type",
+        type=str,
+        default='resnet',
+        choices=['resnet', 'vit'],
+        help="Architecture selected."
+    )
+
 
     optimization = parser.add_argument_group("Optimization")
     optimization.add_argument(

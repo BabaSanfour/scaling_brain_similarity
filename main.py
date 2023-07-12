@@ -5,6 +5,7 @@ import warnings
 import torch
 import torch.nn as nn
 from resnet import resnet
+from ViT import ViT
 from data.data_loader import dataloader
 from config import get_config_parser
 from utils import seed_experiment, get_model_size
@@ -145,7 +146,10 @@ if __name__ == '__main__':
     for key, val in model_config.items():
         print(f'{key}:\t{val}')
     print('############################################')
-    model = resnet(**model_config)
+    if args.model_type == "resnet":
+        model = resnet(**model_config)
+    else:
+        model = ViT(**model_config)
     model.to(args.device)
 
     # Loss function
