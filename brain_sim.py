@@ -1,14 +1,32 @@
-from brainscore.benchmarks import public_benchmark_pool
-from config import get_config_parser
-import torch
 import os
+import re
 import json
-from resnet import resnet
+import functools
+import numpy as np
+import multiprocessing
+
+import torch
 from model_tools.activations.pytorch import PytorchWrapper
 from model_tools.activations.pytorch import load_preprocess_images
-import functools
 from model_tools.brain_transformation import ModelCommitment
+
 from brainscore import score_model
+
+from config import get_config_parser
+from resnet import resnet
+from ViT import ViT
+
+benchmark_list = {
+    'v1': 'movshon.FreemanZiemba2013public.V1-pls',
+    'v2': 'movshon.FreemanZiemba2013public.V2-pls',
+    'v4': 'dicarlo.MajajHong2015public.V4-pls',
+    'IT': 'dicarlo.MajajHong2015public.IT-pls',
+    'behav': 'dicarlo.Rajalingham2018public-i2n'
+}
+
+def score_benchmark(region, benchmark, model, model_config, scaling_factor, times, logdir):
+    score = score_model(model_identifier=model.identifier, model=model, benchmark_identifier=benchmark)
+    np.save(os.path.join(logdir, f'{os.path.basename(model_config)}_s{scaling_factor}_t{times}_{region}.npy', score.values))
 
 if __name__ == '__main__':
 
@@ -21,19 +39,37 @@ if __name__ == '__main__':
             model_config = json.load(f)
     else:
         raise ValueError('Please provide a model config json')
+
+    print('############################################')
+
     name = args.model_name
-    benchmark = public_benchmark_pool['dicarlo.MajajHong2015public.IT-pls']
-    model = resnet(**model_config)
+
+    if args.model_type == "resnet":
+        model = resnet(**model_config)
+        pattern = re.compile(r'(.*maxpool.*|.*downsample.1|.*bn1.*|.*bn2.*|.*relu.*|.*avgpool.*|.*classifier.*)')
+        layers = [name for name, _ in model.named_modules() if pattern.match(name)]
+
+    else:
+        model = ViT(**model_config)
+
+    model.to(args.device)
+
     model.load_state_dict(torch.load(args.model_name, map_location=torch.device('cpu')))
     preprocessing = functools.partial(load_preprocess_images, image_size=224)
-    activations_model = PytorchWrapper(identifier=f'{os.path.basename(args.model_config)}_{args.scaling_factor}', model=model, preprocessing=preprocessing)
-    model = ModelCommitment(identifier=f'{os.path.basename(args.model_config)}_{args.scaling_factor}', activations_model=activations_model,
-                        # specify layers to consider
-                        layers=[ 'model.block3.4.bn2', 'model.block3.4.relu', 'model.block3.5.bn1', 'model.block3.5.bn2',  'model.block3.5.relu',
-                    'model.block4.0.bn1',  'model.block4.0.bn2', 'model.block4.0.relu', 'model.block4.1.bn1', 'model.block4.1.bn2', 'model.block4.1.relu',  'model.block4.2.bn1',  'model.block4.2.bn2',
-                    'model.block4.2.relu'])
-    score = score_model(model_identifier=model.identifier, model=model,
-                    benchmark_identifier='dicarlo.MajajHong2015public.IT-pls')
-    print(score)
-    with open(f"/home/hamza97/scratch/scaling_net_weights/{os.path.basename(args.model_config)}_{args.scaling_factor}.json", "w") as outfile:
-        outfile.write(score)
+    activations_model = PytorchWrapper(
+        identifier=f'{os.path.basename(args.model_config)}_s{args.scaling_factor}_t{args.times}', 
+        model=model, 
+        preprocessing=preprocessing
+    )
+
+    model = ModelCommitment(
+        identifier=f'{os.path.basename(args.model_config)}_s{args.scaling_factor}_t{args.times}', 
+        activations_model=activations_model,
+        layers=layers
+        )
+    
+    processes = []
+    for region, benchmark in benchmark_list.items():
+        process = multiprocessing.Process(target=score_benchmark, args=(region, benchmark, model, args.model_config, args.scaling_factor, args.times, args.logdir))
+        process.start()
+        processes.append(process)
