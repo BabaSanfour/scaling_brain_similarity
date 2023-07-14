@@ -139,7 +139,7 @@ def get_config_parser():
         "--logdir",
         type=str,
         default='exps/',
-        help="unique experiment identifier (default: %(default)s).",
+        help="experiment result's folder.",
     )
     exp.add_argument(
         "--seed",
