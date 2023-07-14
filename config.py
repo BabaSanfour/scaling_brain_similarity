@@ -14,17 +14,27 @@ def get_config_parser():
         default=6, 
         help="Scaling factor(default: %(default)s)."
     )
+
     data.add_argument(
         "--data_aug", 
-        type=bool, 
-        default=False, 
+        dest="data_aug", 
+        action="store_true",
         help="Adding data augmentation"
     )
+
+    data.add_argument(
+        "--no-data_aug", 
+        dest="data_aug", 
+        action="store_false",
+        help="Without data augmentation"
+    )
+    data.set_defaults(feature=False)
+    
     data.add_argument(
         "--times", 
         type=int, 
         choices=[1, 2],
-        default=False, 
+        default=1, 
         help="How many times to augment the data"
     )
 
@@ -84,19 +94,39 @@ def get_config_parser():
         help="weight decay (default: %(default)s).",
     )
 
-    model = parser.add_argument_group("Checkpoints")
+    optimization = parser.add_argument_group("Checkpoints")
     optimization.add_argument(
         "--load_checkpoint",
-        type=bool,
-        default=False,
-        help="If we will load a saved checkpoint and continue training (default: %(default)s).",
+        dest="load_checkpoint", 
+        action="store_true",
+        help="If we will load a saved checkpoint and continue training.",
     )
+
+    optimization.add_argument(
+        "--no-load_checkpoint", 
+        dest="load_checkpoint", 
+        action="store_false",
+        help="Without a checkpoint."
+    )
+
+    optimization.set_defaults(feature=False)
+
     optimization.add_argument(
         "--save_checkpoint",
-        type=bool,
-        default=False,
-        help="Save a checkpoint at every epoch (default: %(default)s).",
+        dest="save_checkpoint", 
+        action="store_true",
+        help="Save a checkpoint at every epoch.",
     )
+
+    optimization.add_argument(
+        "--no-save_checkpoint", 
+        dest="save_checkpoint", 
+        action="store_false",
+        help="Don't save checkpoints."
+    )
+
+    optimization.set_defaults(feature=False)
+
     optimization.add_argument(
         "--checkpoint_path",
         type=str,
