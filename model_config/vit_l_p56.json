@@ -1,5 +1,5 @@
 {
-    "patch_size": 64,
+    "patch_size": 56,
     "num_layers": 24,
     "num_heads": 16,
     "hidden_dim": 1024,
