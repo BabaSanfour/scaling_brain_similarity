@@ -64,9 +64,9 @@ def dataloader(batch_n, scaling_fac=1, data_aug=False, times=1):
     valid_dataset, test_dataset = torch.utils.data.random_split(valid_dataset, [25000, 25000])
 
     # ##Test dataset
-    dataset_loader = {'train': torch.utils.data.DataLoader(train_dataset, batch_size=batch_n, num_workers=4, shuffle=True),
-                      'valid': torch.utils.data.DataLoader(valid_dataset, batch_size=batch_n, num_workers=4, shuffle=True),
-                      'test': torch.utils.data.DataLoader(test_dataset, batch_size=batch_n, num_workers=4, shuffle=False),
+    dataset_loader = {'train': torch.utils.data.DataLoader(train_dataset, batch_size=batch_n, num_workers=4, shuffle=True, pin_memory=True),
+                      'valid': torch.utils.data.DataLoader(valid_dataset, batch_size=batch_n, num_workers=4, shuffle=False, pin_memory=True),
+                      'test': torch.utils.data.DataLoader(test_dataset, batch_size=batch_n, num_workers=4, shuffle=False, pin_memory=True),
                       }
 
     dataset_sizes = {'train': len(train_dataset), 'valid' : len(valid_dataset), 'test': len(test_dataset)}

@@ -150,6 +150,10 @@ if __name__ == '__main__':
         model = resnet(**model_config)
     else:
         model = ViT(**model_config)
+    num_gpus_available = torch.cuda.device_count()
+    if num_gpus_available > 1:
+        print(f"Multiple GPUs ({num_gpus_available}) are available. Using DataParallel.")
+        model = nn.DataParallel(model)
     model.to(args.device)
 
     # Loss function
