@@ -26,7 +26,7 @@ benchmark_list = {
 
 def score_benchmark(region, benchmark, model, model_config, scaling_factor, times, logdir):
     score = score_model(model_identifier=model.identifier, model=model, benchmark_identifier=benchmark)
-    np.save(os.path.join(logdir, f'{os.path.basename(model_config)}_s{scaling_factor}_t{times}_{region}.npy', score.values))
+    np.save(os.path.join(logdir, f'{os.path.basename(model_config)}_s{scaling_factor}_t{times}_{region}.npy'), score.values)
 
 if __name__ == '__main__':
 

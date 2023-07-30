@@ -33,7 +33,7 @@ def get_config_parser():
     data.add_argument(
         "--times", 
         type=int, 
-        choices=[1, 2],
+        choices=[0, 1, 2],
         default=1, 
         help="How many times to augment the data"
     )
