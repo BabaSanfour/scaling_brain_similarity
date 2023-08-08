@@ -24,9 +24,6 @@ benchmark_list = {
     'behav': 'dicarlo.Rajalingham2018public-i2n'
 }
 
-def score_benchmark(region, benchmark, model, model_config, scaling_factor, times, logdir):
-    score = score_model(model_identifier=model.identifier, model=model, benchmark_identifier=benchmark)
-    np.save(os.path.join(logdir, f'{os.path.basename(model_config)}_s{scaling_factor}_t{times}_{region}.npy'), score.values)
 
 if __name__ == '__main__':
 
@@ -67,9 +64,7 @@ if __name__ == '__main__':
         activations_model=activations_model,
         layers=layers
         )
-    
-    processes = []
+
     for region, benchmark in benchmark_list.items():
-        process = multiprocessing.Process(target=score_benchmark, args=(region, benchmark, model, args.model_config, args.scaling_factor, args.times, args.logdir))
-        process.start()
-        processes.append(process)
+        score = score_model(model_identifier=model.identifier, model=model, benchmark_identifier=benchmark)
+        np.save(os.path.join(args.logdir, f'{os.path.splitext(os.path.basename(args.model_config))[0]}_s{args.scaling_factor}_t{args.times}_{region}.npy'), score.values)
