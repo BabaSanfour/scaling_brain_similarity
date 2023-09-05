@@ -14,12 +14,12 @@ from PIL import Image
 
 import logging
 
-proj_path = sys.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+proj_path = os.path.dirname(os.path.abspath(__file__))
 # Configure logging
 logging.basicConfig(filename='data_processing.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load CSV data
-csv_data = pd.read_csv(os.path.join(proj_path, "LOC_val_solution.csv"))
+csv_data = pd.read_csv("LOC_val_solution.csv")
 
 # Load label matching data
 with open(os.path.join(proj_path, "match_labels.json"), 'r') as f:
@@ -78,9 +78,9 @@ def make_array(data_dir: str, folder: str) -> tuple:
                 if os.path.isdir(os.path.join(data_dir, label))
             ]
         )
-        label = match_labels.get(label_folder, None)
 
         for label_folder in label_folders:
+            label = match_labels.get(label_folder, None)
             pictures_paths = sorted(
                 [
                     os.path.join(label_folder, sname)
