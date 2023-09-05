@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 data_paths = {"imagenet": 'ILSVRC/Data/CLS-LOC/train/',
-                 "places365": 'train'}
+                 "places365": 'places365_standard/train/'}
 
 def get_all_files(directory: str) -> list:
     """
@@ -25,12 +25,9 @@ def get_all_files(directory: str) -> list:
         list: A list of file names in the directory.
     """
     filenames = []
-    class_name = os.path.basename(directory)
     for filename in os.listdir(directory):
         if os.path.isfile(os.path.join(directory, filename)):
             filenames.append(filename)
-            part_name = filename.split('_')[0]
-            assert part_name == class_name
     return filenames
 
 
