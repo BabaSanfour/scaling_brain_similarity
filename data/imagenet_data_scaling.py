@@ -4,8 +4,15 @@ import shutil
 import random
 import logging
 
-# Configure logging
-logging.basicConfig(filename='data_copy.log', level=logging.INFO)
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from utils.config import get_data_config_parser
+# Configure logger
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+data_paths = {"imagenet": 'ILSVRC/Data/CLS-LOC/train/',
+                 "places365": 'train'}
 
 def get_all_files(directory: str) -> list:
     """
@@ -25,6 +32,7 @@ def get_all_files(directory: str) -> list:
             part_name = filename.split('_')[0]
             assert part_name == class_name
     return filenames
+
 
 def copy_data(scaling_factor: int, dirs: list, subtrain_per_class: str) -> None:
     """
@@ -63,15 +71,19 @@ def copy_data(scaling_factor: int, dirs: list, subtrain_per_class: str) -> None:
             except Exception as e:
                 logging.error(f"Error copying file {filename}: {str(e)}")
     
-    logging.info(f'Finished {scaling_factor} scaling factor, total cost time: {time.time() - process_start_time:.2f} sec')
-    logging.info(f'Total number of images selected: {total_images_per_scaling_factor}')
+    logger.info(f'Finished {scaling_factor} scaling factor, total cost time: {time.time() - process_start_time:.2f} sec')
+    logger.info(f'Total number of images selected: {total_images_per_scaling_factor}')
 
 if __name__ == '__main__':
-    train_path = 'ILSVRC/Data/CLS-LOC/train/'
+    parser = get_data_config_parser()
+    args = parser.parse_args()
+
+    train_path = data_paths[args.dataset]
+
     dirs = [d for d in os.listdir(train_path) if os.path.isdir(os.path.join(train_path, d))]
-    logging.info('Number of classes: %d', len(dirs))
+    logger.info('Number of classes: %d', len(dirs))
     
-    new_train_path = 'imagenet_subtrain/'
+    new_train_path = 'subtrain/'
     os.system(f'rm -rf {new_train_path}')
     os.system(f'mkdir {new_train_path}')
     
@@ -83,4 +95,4 @@ if __name__ == '__main__':
         os.system(f'mkdir {subtrain_per_class}')
         copy_data(scaling_factor, dirs, subtrain_per_class)
 
-    logging.info('Finished copying data')
+    logger.info('Finished copying data')
