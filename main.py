@@ -146,6 +146,7 @@ if __name__ == '__main__':
             model_config = json.load(f)
     else:
         raise ValueError('Please provide a model config json')
+    model_config['num_classes'] = args.num_classes
     for key, val in model_config.items():
         print(f'{key}:\t{val}')
     print('############################################')
@@ -154,6 +155,7 @@ if __name__ == '__main__':
     else:
         model = ViT(**model_config)
     num_gpus_available = torch.cuda.device_count()
+    
     if num_gpus_available > 1:
         print(f"Multiple GPUs ({num_gpus_available}) are available. Using DataParallel.")
         model = nn.DataParallel(model)

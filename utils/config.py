@@ -81,6 +81,12 @@ def get_config_parser():
         help="Architecture selected."
     )
 
+    model.add_argument(
+        "--num_classes",
+        type=int,
+        default=365,
+        help="Number of classes. Depends on the dataset you are using to train."
+    )
 
     optimization = parser.add_argument_group("Optimization")
     optimization.add_argument(
