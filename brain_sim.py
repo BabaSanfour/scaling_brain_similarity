@@ -12,7 +12,7 @@ from model_tools.brain_transformation import ModelCommitment
 
 from brainscore import score_model
 
-from config import get_config_parser
+from utils.config import get_config_parser
 from resnet import resnet
 from ViT import ViT
 
@@ -21,7 +21,6 @@ benchmark_list = {
     'v2': 'movshon.FreemanZiemba2013public.V2-pls',
     'v4': 'dicarlo.MajajHong2015public.V4-pls',
     'IT': 'dicarlo.MajajHong2015public.IT-pls',
-    'behav': 'dicarlo.Rajalingham2018public-i2n'
 }
 
 

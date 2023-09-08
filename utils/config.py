@@ -1,5 +1,26 @@
 import argparse
 
+
+def get_data_config_parser():
+    parser = argparse.ArgumentParser(description="Data processing.")
+
+    data = parser.add_argument_group("Data")
+    data.add_argument(
+        "--dataset", 
+        type=str, 
+        default="imagenet", 
+        help="Dataset name(default: %(default)s)."
+    )
+
+    data = parser.add_argument_group("Data")
+    data.add_argument(
+        "--hdf5_dir", 
+        type=str, 
+        help="HDF5 directory(default: %(default)s)."
+    )
+
+    return parser
+
 def get_config_parser():
     parser = argparse.ArgumentParser(description="Run experiments.")
 
@@ -10,7 +31,7 @@ def get_config_parser():
     data.add_argument(
         "--scaling_factor", 
         type=int, 
-        choices=[0, 1, 2, 3, 4, 5, 6],
+        choices=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         default=6, 
         help="Scaling factor(default: %(default)s)."
     )

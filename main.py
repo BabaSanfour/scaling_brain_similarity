@@ -1,3 +1,4 @@
+import os
 import json
 import time
 import wandb
@@ -6,9 +7,9 @@ import torch
 import torch.nn as nn
 from resnet import resnet
 from ViT import ViT
-from data.data_loader import dataloader
-from config import get_config_parser
-from utils import seed_experiment, get_model_size
+from utils.data_loader import dataloader
+from utils.config import get_config_parser
+from utils.utils import seed_experiment, get_model_size
 
 
 def train_network(model, criterion, optimizer, starting_epoch, epochs, dataset_loader, dataset_sizes, device, wandb,  save_checkpoint, checkpoint_path, valid=True):
@@ -69,6 +70,8 @@ def train_network(model, criterion, optimizer, starting_epoch, epochs, dataset_l
             wandb.log({"Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
         
         if save_checkpoint:
+            #TODO: add saving checkpoints with epoch number only for scaling compute
+            checkpoint_path = f"{os.path.splitext(checkpoint_path)[0]}_{epoch}.pth"
             save_checkpoints(epoch, model, optimizer, checkpoint_path)            
 
     print()
@@ -165,7 +168,7 @@ if __name__ == '__main__':
             model.parameters(), lr=args.lr, weight_decay=args.weight_decay
         )
     elif args.optimizer == "adam":
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optimizer == "sgd":
         optimizer = torch.optim.SGD(
             model.parameters(), lr=args.lr, weight_decay=args.weight_decay

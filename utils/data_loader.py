@@ -61,7 +61,10 @@ def dataloader(batch_n, scaling_fac=1, data_aug=False, times=1):
                                         torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
                                         torchvision.transforms.Normalize(mean=mean, std=std)]))
 
-    valid_dataset, test_dataset = torch.utils.data.random_split(valid_dataset, [25000, 25000])
+    valid_size = len(valid_dataset)
+    valid_size = int(valid_size * 0.5)  # Splitting the 'valid' set in half
+
+    valid_dataset, test_dataset = torch.utils.data.random_split(valid_dataset, [valid_size, valid_size])
 
     # ##Test dataset
     dataset_loader = {'train': torch.utils.data.DataLoader(train_dataset, batch_size=batch_n, num_workers=4, shuffle=True, pin_memory=True),
