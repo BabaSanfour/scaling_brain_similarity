@@ -12,6 +12,11 @@ import cv2
 import torchvision
 from PIL import Image
 
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from utils.config import get_data_config_parser
+
+
 import logging
 
 proj_path = os.path.dirname(os.path.abspath(__file__))
@@ -20,14 +25,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Load CSV data
-csv_data = pd.read_csv("LOC_val_solution.csv")
-
-# Load label matching data
-with open(os.path.join(proj_path, "match_labels.json"), 'r') as f:
-    match_labels = json.load(f)
+csv_data = None #pd.read_csv("LOC_val_solution.csv")
 
 
-def store_many_hdf5(images: np.array, labels: np.array, folder: str) -> None:
+def store_many_hdf5(images: np.array, labels: np.array, folder: str, hdf5_dir: str) -> None:
     """Stores an array of images to HDF5.
 
     Args:
@@ -37,9 +38,10 @@ def store_many_hdf5(images: np.array, labels: np.array, folder: str) -> None:
         Labels array, shape (N,), to be stored.
     folder: str
         Folder name for the HDF5 file.
+    hdf5_dir: str
+        Folder to save HDF5 files.
 
     """
-    hdf5_dir = "/home/hamza97/scratch/data/scaling_data/hdf5/"
     if not os.path.exists(hdf5_dir):
         os.makedirs(hdf5_dir)
     # Create a new HDF5 file
@@ -53,13 +55,14 @@ def store_many_hdf5(images: np.array, labels: np.array, folder: str) -> None:
     logger.info(f"{folder} h5 is ready")
 
 
-def make_array(data_dir: str, folder: str) -> tuple:
+def make_array(data_dir: str, data: str, dataset: str) -> tuple:
     """
     Create arrays of images and labels based on the specified analysis type and folder.
 
     Args:
         data_dir (str): The path to the data directory.
-        folder (str): The folder type ('train' or 'valid').
+        data (str):     The data type ('train imagenet or places365' or 'val imagenet or places365').
+        dataset (str):   The dataset name ('imagenet' or 'places365').
 
     Returns:
         tuple: A tuple containing image and label arrays.
@@ -71,7 +74,12 @@ def make_array(data_dir: str, folder: str) -> tuple:
     # Resize images to 224x224
     resize = torchvision.transforms.Resize((224, 224))
 
-    if folder == 'train':
+        # Load label matching data
+    with open(os.path.join(proj_path, f"match_labels_{dataset}.json"), 'r') as f:
+        match_labels = json.load(f)
+
+
+    if data in ['train_imagenet', 'train_places365', 'val_places365']:
         label_folders = sorted(
             [
                 label
@@ -98,7 +106,7 @@ def make_array(data_dir: str, folder: str) -> tuple:
                 img_array.append(sample)
                 label_array.append(label)
     
-    elif folder == 'valid':
+    elif data == 'val_imagenet':
         pictures_paths = sorted(
             [
                 os.path.join(data_dir, sname)
@@ -119,7 +127,7 @@ def make_array(data_dir: str, folder: str) -> tuple:
             sample = np.asarray(resize(PIL_image), dtype=np.uint8)
             img_array.append(sample)
             label_array.append(label)
-    print(label_array)
+
     logger.info(f"Image array shape: {np.asarray(img_array).shape}")
     logger.info(f"Label array shape: {np.asarray(label_array).shape}")
     return np.asarray(img_array), np.asarray(label_array)
@@ -127,16 +135,25 @@ def make_array(data_dir: str, folder: str) -> tuple:
 
 if __name__ == '__main__':
 
-    for scale in range(11):
+    parser = get_data_config_parser()
+    args = parser.parse_args()
+    hdf5_dir = os.path.join(args.hdf5_dir, args.dataset)
+
+    for scale in range(1, 11):
         folder = f"scaling_fac_{scale}"
         logger.info(f"Processing data for {folder}")
         begin_time = datetime.datetime.now()
-        img_array, label_array = make_array(folder, "train")
-        store_many_hdf5(img_array, label_array, folder)
+        img_array, label_array = make_array(folder, f"train_{args.dataset}", args.dataset)
+        store_many_hdf5(img_array, label_array, folder, hdf5_dir)
         logger.info(f"Processing time for {folder}: {datetime.datetime.now() - begin_time}")
 
     begin_time = datetime.datetime.now()
     logger.info(f"Processing data for validation set")
-    img_array, label_array = make_array(os.path.join('ILSVRC', 'Data', 'CLS-LOC', 'val'), "valid")
-    store_many_hdf5(img_array, label_array, folder)
+    if args.dataset == "imagenet":
+        img_array, label_array = make_array(os.path.join('ILSVRC', 'Data', 'CLS-LOC', 'val'), "val_imagenet", args.dataset)
+        store_many_hdf5(img_array, label_array, "valid", hdf5_dir)
+    elif args.dataset == "places365":
+        img_array, label_array = make_array(os.path.join('places365_standard', 'val'), "val_places365", args.dataset)
+        store_many_hdf5(img_array, label_array, "valid", hdf5_dir)
+
     logger.info(f"Processing time for validation set: {datetime.datetime.now() - begin_time}")
