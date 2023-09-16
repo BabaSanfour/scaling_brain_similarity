@@ -31,7 +31,7 @@ def get_all_files(directory: str) -> list:
     return filenames
 
 
-def copy_data(scaling_factor: int, dirs: list, subtrain_per_class: str) -> None:
+def copy_data(scaling_factor: int, dirs: list, subtrain_per_class: str, random_seed: int) -> None:
     """
     Copy data from source directories to subdirectories with a specified scaling factor.
 
@@ -39,6 +39,7 @@ def copy_data(scaling_factor: int, dirs: list, subtrain_per_class: str) -> None:
         scaling_factor (int): Scaling factor for the number of images.
         dirs (list): List of class directories.
         subtrain_per_class (str): Path to the target directory.
+        random_seed (int): Random seed for sampling.
     """
     process_start_time = time.time()
     total_images_per_scaling_factor = 0
@@ -51,6 +52,7 @@ def copy_data(scaling_factor: int, dirs: list, subtrain_per_class: str) -> None:
         
         # Randomly sample if there are more images than needed
         if len(filenames) > new_number_images_per_class:
+            random.seed(random_seed)
             filenames = random.sample(filenames, new_number_images_per_class)
 
         total_images_per_scaling_factor += len(filenames)
@@ -84,12 +86,12 @@ if __name__ == '__main__':
     os.system(f'rm -rf {new_train_path}')
     os.system(f'mkdir {new_train_path}')
     
-    scaling_factors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # Scaling factor of 0 => get the total dataset
+    scaling_factors = [7, 8, 9, 10]  # Scaling factor of 0 => get the total dataset
     
     for scaling_factor in scaling_factors:
-        subtrain_per_class = os.path.join(new_train_path, 'scaling_fac_' + str(scaling_factor))
+        subtrain_per_class = os.path.join(new_train_path, f'scaling_fac_{str(scaling_factor)}_{args.random_seed}')
         os.system(f'rm -rf {subtrain_per_class}')
         os.system(f'mkdir {subtrain_per_class}')
-        copy_data(scaling_factor, dirs, subtrain_per_class)
+        copy_data(scaling_factor, dirs, subtrain_per_class, args.random_seed)
 
     logger.info('Finished copying data')
