@@ -12,6 +12,13 @@ def get_data_config_parser():
         help="Dataset name(default: %(default)s)."
     )
 
+    data.add_argument(
+        "--random_seed",
+        type=int, 
+        default= 42,
+        help="Random seed(default: %(default)s)."
+        )
+
     data = parser.add_argument_group("Data")
     data.add_argument(
         "--hdf5_dir", 
