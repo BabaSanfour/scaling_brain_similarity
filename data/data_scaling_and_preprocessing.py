@@ -86,7 +86,7 @@ if __name__ == '__main__':
     os.system(f'rm -rf {new_train_path}')
     os.system(f'mkdir {new_train_path}')
     
-    scaling_factors = [7, 8, 9, 10]  # Scaling factor of 0 => get the total dataset
+    scaling_factors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # Scaling factor of 0 => get the total dataset
     
     for scaling_factor in scaling_factors:
         subtrain_per_class = os.path.join(new_train_path, f'scaling_fac_{str(scaling_factor)}_{args.random_seed}')

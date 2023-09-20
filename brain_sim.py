@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print('############################################')
 
     name = args.model_name
-
+    model_config['num_classes'] = args.num_classes
     if args.model_type == "resnet":
         model = resnet(**model_config)
         pattern = re.compile(r'(.*maxpool.*|.*downsample.1|.*bn1.*|.*bn2.*|.*relu.*|.*avgpool.*|.*classifier.*)')
@@ -57,17 +57,17 @@ if __name__ == '__main__':
         model.load_state_dict(torch.load(args.model_name, map_location=torch.device('cpu')))
     preprocessing = functools.partial(load_preprocess_images, image_size=224)
     activations_model = PytorchWrapper(
-        identifier=f'{os.path.basename(args.model_config)}_s{args.scaling_factor}_t{args.times}', 
+        identifier=f'{os.path.splitext(os.path.basename(args.model_name))[0]}', 
         model=model, 
         preprocessing=preprocessing
     )
 
     model = ModelCommitment(
-        identifier=f'{os.path.basename(args.model_config)}_s{args.scaling_factor}_t{args.times}', 
+        identifier=f'{os.path.splitext(os.path.basename(args.model_name))[0]}', 
         activations_model=activations_model,
         layers=layers
         )
 
     for region, benchmark in benchmark_list.items():
         score = score_model(model_identifier=model.identifier, model=model, benchmark_identifier=benchmark)
-        np.save(os.path.join(args.logdir, f'{os.path.splitext(os.path.basename(args.model_config))[0]}_s{args.scaling_factor}_t{args.times}_{region}.npy'), score.values)
+        np.save(os.path.join(args.logdir, f'{os.path.splitext(os.path.basename(args.model_name))[0]}.npy'), score.values)

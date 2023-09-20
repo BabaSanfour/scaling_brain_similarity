@@ -139,21 +139,21 @@ if __name__ == '__main__':
     args = parser.parse_args()
     hdf5_dir = os.path.join(args.hdf5_dir, args.dataset)
 
-    for scale in range(1, 11):
-        folder = f"scaling_fac_{scale}"
+    for scale in range(7, 11):
+        folder = f"scaling_fac_{scale}_{args.random_seed}"
         logger.info(f"Processing data for {folder}")
         begin_time = datetime.datetime.now()
         img_array, label_array = make_array(folder, f"train_{args.dataset}", args.dataset)
         store_many_hdf5(img_array, label_array, folder, hdf5_dir)
         logger.info(f"Processing time for {folder}: {datetime.datetime.now() - begin_time}")
 
-    begin_time = datetime.datetime.now()
-    logger.info(f"Processing data for validation set")
-    if args.dataset == "imagenet":
-        img_array, label_array = make_array(os.path.join('ILSVRC', 'Data', 'CLS-LOC', 'val'), "val_imagenet", args.dataset)
-        store_many_hdf5(img_array, label_array, "valid", hdf5_dir)
-    elif args.dataset == "places365":
-        img_array, label_array = make_array(os.path.join('places365_standard', 'val'), "val_places365", args.dataset)
-        store_many_hdf5(img_array, label_array, "valid", hdf5_dir)
+    # begin_time = datetime.datetime.now()
+    # logger.info(f"Processing data for validation set")
+    # if args.dataset == "imagenet":
+    #     img_array, label_array = make_array(os.path.join('ILSVRC', 'Data', 'CLS-LOC', 'val'), "val_imagenet", args.dataset)
+    #     store_many_hdf5(img_array, label_array, "valid", hdf5_dir)
+    # elif args.dataset == "places365":
+    #     img_array, label_array = make_array(os.path.join('places365_standard', 'val'), "val_places365", args.dataset)
+    #     store_many_hdf5(img_array, label_array, "valid", hdf5_dir)
 
-    logger.info(f"Processing time for validation set: {datetime.datetime.now() - begin_time}")
+    # logger.info(f"Processing time for validation set: {datetime.datetime.now() - begin_time}")
