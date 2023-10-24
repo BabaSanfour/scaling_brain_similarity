@@ -42,6 +42,12 @@ def get_config_parser():
         default=6, 
         help="Scaling factor(default: %(default)s)."
     )
+    data.add_argument(
+        "--random_seed",
+        type=int, 
+        default= 42,
+        help="Random seed(default: %(default)s)."
+        )
 
     data.add_argument(
         "--data_aug", 
