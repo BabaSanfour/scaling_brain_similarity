@@ -3,7 +3,6 @@ import re
 import json
 import functools
 import numpy as np
-import multiprocessing
 
 import torch
 from model_tools.activations.pytorch import PytorchWrapper
@@ -70,4 +69,4 @@ if __name__ == '__main__':
 
     for region, benchmark in benchmark_list.items():
         score = score_model(model_identifier=model.identifier, model=model, benchmark_identifier=benchmark)
-        np.save(os.path.join(args.logdir, f'{os.path.splitext(os.path.basename(args.model_name))[0]}.npy'), score.values)
+        np.save(os.path.join(args.logdir, f'{os.path.splitext(os.path.basename(args.model_name))[0]}_{region}.npy'), score.values)
