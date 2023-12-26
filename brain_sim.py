@@ -52,8 +52,10 @@ if __name__ == '__main__':
     if args.load_checkpoint:
         checkpoint = torch.load(args.model_name, map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['model_state_dict'])
-    else:
+    elif args.pretrained:
         model.load_state_dict(torch.load(args.model_name, map_location=torch.device('cpu')))
+    else:
+        print('No checkpoint loaded')
     preprocessing = functools.partial(load_preprocess_images, image_size=224)
     activations_model = PytorchWrapper(
         identifier=f'{os.path.splitext(os.path.basename(args.model_name))[0]}', 

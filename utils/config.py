@@ -148,6 +148,19 @@ def get_config_parser():
         action="store_false",
         help="Without a checkpoint."
     )
+    optimization.add_argument(
+        "--pretrained",
+        dest="pretrained", 
+        action="store_true",
+        help="Use trained or random weights.",
+    )
+
+    optimization.add_argument(
+        "--no-pretrained", 
+        dest="pretrained",
+        action="store_false",
+        help="Random weights."
+    )
 
     optimization.set_defaults(feature=False)
 
