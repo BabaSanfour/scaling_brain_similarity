@@ -12,143 +12,17 @@ from utils.config import get_config_parser
 from utils.utils import seed_experiment, get_model_size
 
 
-def train_network(model, criterion, optimizer, starting_epoch, epochs, dataset_loader, dataset_sizes, device, wandb,  save_checkpoint, checkpoint_path, valid=True):
-    best_acc = -1.0 
-    list_trainLoss, list_trainAcc, list_valLoss, list_valAcc  = [], [], [], []
-    since = time.time()
-    steps=0
-    best_acc_steps=0
-    for epoch in range(starting_epoch, epochs):
-        print(f"====== Epoch {epoch} ======>")
-        n_correct = 0 #correct predictions train
-        running_loss = 0.0 # train loss
-        loss = 0.0
-        with torch.set_grad_enabled(True):
-            model.train()
-            for inputs_, labels_ in dataset_loader["train"]:
-                steps+=1
-                inputs = inputs_.to(device)
-                labels = labels_.to(device)
-                optimizer.zero_grad()
-                outputs = model(inputs)
-                n_correct += (torch.max(outputs, 1)[1].view(labels.data.size()) == labels.data).sum().item()
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
-                running_loss += loss.item() * inputs.size(0)
-            train_acc = 100. * n_correct/dataset_sizes["train"]
-            train_loss = running_loss / dataset_sizes["train"]
-            print(f"== [TRAIN] Epoch: {epoch}, Accuracy: {train_acc:.3f} ==>, Loss: {train_loss:.3f} ==>,")
-            list_trainLoss.append(train_loss)
-            list_trainAcc.append(train_acc)
+import torch.multiprocessing as mp
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.distributed import init_process_group, destroy_process_group
+import torch.distributed as dist
 
-        if valid:
-            with torch.no_grad():
-                model.eval()
-                n_dev_correct=0
-                running_loss = 0.0
-                loss = 0.0
-                for inputs_, labels_ in dataset_loader["valid"]:
-                    inputs = inputs_.to(device)
-                    labels = labels_.to(device)
-                    outputs = model(inputs)
-                    n_dev_correct += (torch.max(outputs, 1)[1].view(labels.data.size()) == labels.data).sum().item()
-                    loss = criterion(outputs, labels)
-                    running_loss += loss.item() * inputs.size(0)
-                valid_acc = 100. * n_dev_correct/dataset_sizes["valid"]
-                valid_loss = running_loss / dataset_sizes["valid"]
-                list_valLoss.append(valid_loss)
-                list_valAcc.append(valid_acc)
-                print(f"== [VALID] Epoch: {epoch}, Accuracy: {valid_acc:.3f} ==>, Loss: {valid_loss:.3f} ==>,")
-                if valid_acc> best_acc:
-                    best_acc= valid_acc
-                    best_model = model
-                    best_acc_steps = steps
-            wandb.log({"Val Loss": valid_loss, "Val Acc": valid_acc, 
-                    "Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
-        else:
-            wandb.log({"Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
-        
-        if save_checkpoint:
-            #TODO: add saving checkpoints with epoch number only for scaling compute
-            checkpoint_path = f"{os.path.splitext(checkpoint_path)[0]}_{epoch}.pth"
-            save_checkpoints(epoch, model, optimizer, checkpoint_path)            
-
-    print()
-    time_elapsed = time.time() - since
-    print(f'Training complete in {time_elapsed // 3600} h {(time_elapsed % 3600) // 60} m {time_elapsed % 60} s')
-    print(f'BEST VALID ACC: {valid_acc:.3f}')
-    print(f'Total steps: {steps}.')
-    print(f'Steps required to reach best performance: {best_acc_steps}.')
-    return best_model, wandb
-
-
-def test_network(model, dataset_loader, dataset_sizes, device):
-    model.eval()
-    n_dev_correct=0
-    test_loss = 0.0
-    criterion = nn.CrossEntropyLoss()
-    for inputs_, labels_ in dataset_loader['test']:
-        inputs = inputs_.to(device)
-        labels = labels_.to(device)
-        outputs = model(inputs)
-        n_dev_correct += (torch.max(outputs, 1)[1].view(labels.data.size()) == labels.data).sum().item()
-        loss = criterion(outputs, labels)
-        test_loss += loss.item() * inputs.size(0)
-    avg_test_acc = 100. * n_dev_correct/dataset_sizes["test"]
-    avg_test_loss = test_loss / dataset_sizes["test"]
-    print(f'TEST LOSS: {avg_test_loss:.3f}')
-    print(f'TEST Accuracy (Top1): {avg_test_acc:.3f}')
-    return avg_test_acc
-
-
-def save_checkpoints(epoch, model, optimizer, file) :
-    """Save checkpoints during training"""
-    torch.save({
-            'epoch': epoch,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            }, file)
-
-
-def save_network_weights(model_ft,  file) :
-    """Save the network after training"""
-    state = model_ft.state_dict()
-    torch.save(state, file)
-
-
-if __name__ == '__main__':
+def main(rank, world_size, model_config):
     parser = get_config_parser()
     args = parser.parse_args()
 
-    # Check for the device
-    if (args.device == "cuda") and not torch.cuda.is_available():
-        warnings.warn(
-            "CUDA is not available, make that your environment is "
-            "running on GPU"
-            'Forcing device="cpu".'
-        )
-        args.device = "cpu"
-
-    if args.device == "cpu":
-        warnings.warn(
-            "You are about to run on CPU, and might run out of memory shortly"
-        )
-
-    # Seed the experiment, for repeatability
-    seed_experiment(args.seed)
-
     start = time.time()
-    # Load model
-    if args.model_config is not None:
-        print(f'Loading model config from {args.model_config}')
-        with open(args.model_config) as f:
-            model_config = json.load(f)
-    else:
-        raise ValueError('Please provide a model config json')
-    model_config['num_classes'] = args.num_classes
-    for key, val in model_config.items():
-        print(f'{key}:\t{val}')
+    ddp_setup(rank, world_size)
     print('############################################')
     if args.model_type == "resnet":
         model = resnet(**model_config)
@@ -158,8 +32,8 @@ if __name__ == '__main__':
     
     if num_gpus_available > 1:
         print(f"Multiple GPUs ({num_gpus_available}) are available. Using DataParallel.")
-        model = nn.DataParallel(model)
-    model.to(args.device)
+    model.to(rank)
+    model = DDP(model, device_ids=[rank])
 
     # Loss function
     criterion = torch.nn.CrossEntropyLoss()
@@ -204,35 +78,217 @@ if __name__ == '__main__':
     starting_epoch = 0
     if args.load_checkpoint:
         checkpoint = torch.load(args.checkpoint_path)
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.module.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         starting_epoch = checkpoint['epoch']+1
 
-    wandb.init(
-        # set the wandb project where this run will be logged
-        project="Scaling AI-Brain similarity",
+    # wandb.init(
+    #     # set the wandb project where this run will be logged
+    #     project="Scaling AI-Brain similarity 2",
         
-        # track hyperparameters and run metadata
-        config={
-        "learning_rate": args.lr,
-        "Starting epoch": starting_epoch,
-        "epochs": args.epochs,
-        "Resume Training": args.load_checkpoint,
-        "batch_size": args.batch_size,
-        "Optimizer": args.optimizer, 
-        "Total param": get_model_size(model, False),
-        "Trainable param": get_model_size(model, True),
-        "Train Dataset size": dataset_sizes['train'],
-        "scaling factor": args.scaling_factor,
-        }
-    )
-
+    #     # track hyperparameters and run metadata
+    #     config={
+    #     "learning_rate": args.lr,
+    #     "Starting epoch": starting_epoch,
+    #     "epochs": args.epochs,
+    #     "Resume Training": args.load_checkpoint,
+    #     "batch_size": args.batch_size,
+    #     "Optimizer": args.optimizer, 
+    #     "Total param": get_model_size(model, False),
+    #     "Trainable param": get_model_size(model, True),
+    #     "Train Dataset size": dataset_sizes['train'],
+    #     "scaling factor": args.scaling_factor,
+    #     }
+    # )
+    wandb=None
     ###Training & Validation###
-    model_ft, wandb = train_network(model, criterion, optimizer, starting_epoch, args.epochs, dataset_loader, dataset_sizes, args.device, wandb, args.save_checkpoint, args.checkpoint_path)
+    model_ft, wandb = train_network(model, criterion, optimizer, starting_epoch, args.epochs, dataset_loader, dataset_sizes, rank, wandb, args.save_checkpoint, args.checkpoint_path)
     ###Testing###
-    acc=test_network(model_ft, dataset_loader, dataset_sizes, args.device)
-    wandb.log ({"Test Acc": acc})
+    acc=test_network(model_ft, dataset_loader, dataset_sizes, rank)
+    # wandb.log ({"Test Acc": acc})
 
 
     #  Save weights after training
     save_network_weights(model, args.model_name)
+    destroy_process_group()
+
+def ddp_setup(rank, world_size):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    init_process_group("nccl", rank=rank, world_size=world_size)
+    torch.cuda.set_device(rank)
+
+def train_network(model, criterion, optimizer, starting_epoch, epochs, dataset_loader, dataset_sizes, device, wandb,  save_checkpoint, checkpoint_path, valid=True):
+    best_avg_acc = -1.0
+    list_trainLoss, list_trainAcc, list_valLoss, list_valAcc  = [], [], [], []
+    since = time.time()
+    steps=0
+    best_acc_steps=0
+    for epoch in range(starting_epoch, epochs):
+        print(f"====== Epoch {epoch} ======>")
+        n_correct = 0 #correct predictions train
+        running_loss = 0.0 # train loss
+        loss = 0.0
+        dataset_loader["train"].sampler.set_epoch(epoch)
+        with torch.set_grad_enabled(True):
+            model.train()
+            for inputs_, labels_ in dataset_loader["train"]:
+                steps+=1
+                inputs = inputs_.to(device)
+                labels = labels_.to(device)
+                optimizer.zero_grad()
+                outputs = model(inputs)
+                n_correct += (torch.max(outputs, 1)[1].view(labels.data.size()) == labels.data).sum().item()
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item() * inputs.size(0)
+            train_acc = 100. * n_correct/dataset_sizes["train"]
+            train_loss = running_loss / dataset_sizes["train"]
+            print(f"== [TRAIN] Epoch: {epoch}, Accuracy: {train_acc:.3f} ==>, Loss: {train_loss:.3f} ==>,")
+            list_trainLoss.append(train_loss)
+            list_trainAcc.append(train_acc)
+        if valid:
+            with torch.no_grad():
+                model.eval()
+                n_dev_correct=0
+                running_loss = 0.0
+                loss = 0.0
+                dataset_loader["valid"].sampler.set_epoch(epoch)
+                all_dev_outputs = []
+                all_dev_labels = []
+                
+                for inputs_, labels_ in dataset_loader["valid"]:
+                    inputs = inputs_.to(device)
+                    labels = labels_.to(device)
+                    outputs = model(inputs)
+                    all_dev_outputs.append(outputs)
+                    all_dev_labels.append(labels)
+                    n_dev_correct += (torch.max(outputs, 1)[1].view(labels.data.size()) == labels.data).sum().item()
+                    loss = criterion(outputs, labels)
+                    running_loss += loss.item() * inputs.size(0)
+                
+                # Aggregate outputs and labels from all workers
+                all_dev_outputs = torch.cat(all_dev_outputs)
+                all_dev_labels = torch.cat(all_dev_labels)
+
+                # Synchronize and reduce across all GPUs
+                total_correct = torch.tensor(n_dev_correct, dtype=torch.long, device=device)
+                total_loss = torch.tensor(running_loss, dtype=torch.float, device=device)
+
+                dist.reduce(total_correct, op=dist.ReduceOp.SUM, dst=0)
+                dist.reduce(total_loss, op=dist.ReduceOp.SUM, dst=0)
+
+                # Compute average validation accuracy
+                avg_valid_acc = 100. * (torch.max(all_dev_outputs, 1)[1].view(all_dev_labels.size()) == all_dev_labels).sum().item() / len(all_dev_labels)
+                valid_loss = running_loss / dataset_sizes["valid"]
+                list_valLoss.append(valid_loss)
+                list_valAcc.append(avg_valid_acc)
+                if dist.get_rank() == 0:
+                    print(f"== [VALID] Epoch: {epoch}, Accuracy: {avg_valid_acc:.3f} ==>, Loss: {valid_loss:.3f} ==>,")
+
+                if avg_valid_acc> best_avg_acc:
+                    best_avg_acc = avg_valid_acc
+                    best_model = model
+                    best_acc_steps = steps
+            # wandb.log({"Val Loss": valid_loss, "Val Acc": valid_acc, 
+            #         "Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
+        else:
+            wandb.log({"Train Loss": train_loss, "Train Acc": train_acc, "steps":steps})
+        
+        if save_checkpoint:
+            #TODO: add saving checkpoints with epoch number only for scaling compute
+            checkpoint_path = f"{os.path.splitext(checkpoint_path)[0]}_{epoch}.pth"
+            save_checkpoints(epoch, model, optimizer, checkpoint_path)            
+
+    if dist.get_rank() == 0:  # Only print on the master (rank 0) GPU
+        print()
+        time_elapsed = time.time() - since
+        print(f'Training complete in {time_elapsed // 3600} h {(time_elapsed % 3600) // 60} m {time_elapsed % 60} s')
+        print(f'BEST VALID ACC: {best_avg_acc:.3f}')
+        print(f'Total steps: {steps}.')
+        print(f'Steps required to reach best performance: {best_acc_steps}.')
+    return best_model, wandb
+
+
+def test_network(model, dataset_loader, dataset_sizes, device):
+    model.eval()
+    n_dev_correct=0
+    test_loss = 0.0
+    criterion = nn.CrossEntropyLoss()
+    dataset_loader["test"].sampler.set_epoch(0)
+    with torch.no_grad():
+        for inputs_, labels_ in dataset_loader['test']:
+            inputs = inputs_.to(device)
+            labels = labels_.to(device)
+            outputs = model(inputs)
+            n_dev_correct += (torch.max(outputs, 1)[1].view(labels.data.size()) == labels.data).sum().item()
+            loss = criterion(outputs, labels)
+            test_loss += loss.item() * inputs.size(0)
+
+    # Synchronize and reduce across all GPUs
+    total_correct = torch.tensor(n_dev_correct, dtype=torch.long, device=device)
+    total_loss = torch.tensor(test_loss, dtype=torch.float, device=device)
+
+    dist.reduce(total_correct, op=dist.ReduceOp.SUM, dst=0)
+    dist.reduce(total_loss, op=dist.ReduceOp.SUM, dst=0)
+
+    # Calculate average test accuracy and loss
+    avg_test_acc = 100. * total_correct.item() / dataset_sizes["test"]
+    avg_test_loss = total_loss.item() / dataset_sizes["test"]
+
+    if dist.get_rank() == 0:  # Only print on the master (rank 0) GPU
+        print(f'TEST LOSS: {avg_test_loss:.3f}')
+        print(f'TEST Accuracy (Top1): {avg_test_acc:.3f}')
+    return avg_test_acc
+
+
+def save_checkpoints(epoch, model, optimizer, file) :
+    """Save checkpoints during training"""
+    torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.module.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            }, file)
+
+
+def save_network_weights(model_ft,  file) :
+    """Save the network after training"""
+    state = model_ft.module.state_dict()
+    torch.save(state, file)
+
+
+if __name__ == '__main__':
+    parser = get_config_parser()
+    args = parser.parse_args()
+
+    # Check for the device
+    if (args.device == "cuda") and not torch.cuda.is_available():
+        warnings.warn(
+            "CUDA is not available, make that your environment is "
+            "running on GPU"
+            'Forcing device="cpu".'
+        )
+        args.device = "cpu"
+
+    if args.device == "cpu":
+        warnings.warn(
+            "You are about to run on CPU, and might run out of memory shortly"
+        )
+
+    # Seed the experiment, for repeatability
+    seed_experiment(args.seed)
+
+    # Load model
+    if args.model_config is not None:
+        print(f'Loading model config from {args.model_config}')
+        with open(args.model_config) as f:
+            model_config = json.load(f)
+    else:
+        raise ValueError('Please provide a model config json')
+    model_config['num_classes'] = args.num_classes
+    for key, val in model_config.items():
+        print(f'{key}:\t{val}')
+    world_size = torch.cuda.device_count()
+    print(f"Number of GPUs: {world_size}")
+    mp.spawn(main, nprocs=world_size, args=(world_size, model_config))
