@@ -434,7 +434,8 @@ def load_train_objects(args, rank) -> tuple:
             reinit=True,
             # set the wandb project where this run will be logged
             project="Scaling AI-Brain similarity 2",
-            
+            mode="offline", # GPUs are not connected to the internet. 
+            # sync wandb with the cloud at the end of the job
             # track hyperparameters and run metadata
             config={
             "learning_rate": args.lr,
