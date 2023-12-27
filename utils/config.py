@@ -161,6 +161,12 @@ def get_config_parser():
         action="store_false",
         help="Random weights."
     )
+    optimization.add_argument(
+        "--save_every",
+        type=int,
+        default=1,
+        help="Save a checkpoint at every X epoch.",
+    )
 
     optimization.set_defaults(feature=False)
 
