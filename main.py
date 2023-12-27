@@ -511,6 +511,7 @@ def distributed_training(rank, world_size, command_line_args) -> None:
 
     # Clean up after training
     destroy_process_group()
+    wandb.finish()
 
 
 if __name__ == '__main__':
