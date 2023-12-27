@@ -148,19 +148,7 @@ def get_config_parser():
         action="store_false",
         help="Without a checkpoint."
     )
-    optimization.add_argument(
-        "--pretrained",
-        dest="pretrained", 
-        action="store_true",
-        help="Use trained or random weights.",
-    )
-
-    optimization.add_argument(
-        "--no-pretrained", 
-        dest="pretrained",
-        action="store_false",
-        help="Random weights."
-    )
+    
     optimization.add_argument(
         "--save_every",
         type=int,
@@ -168,38 +156,7 @@ def get_config_parser():
         help="Save a checkpoint at every X epoch.",
     )
 
-    optimization.set_defaults(feature=False)
-
-    optimization.add_argument(
-        "--save_checkpoint",
-        dest="save_checkpoint", 
-        action="store_true",
-        help="Save a checkpoint at every epoch.",
-    )
-
-    optimization.add_argument(
-        "--no-save_checkpoint", 
-        dest="save_checkpoint", 
-        action="store_false",
-        help="Don't save checkpoints."
-    )
-
-    optimization.set_defaults(feature=False)
-
-    optimization.add_argument(
-        "--checkpoint_path",
-        type=str,
-        default="checkpoint.pth",
-        help="checkpoint file path (default: %(default)s).",
-    )
-
     exp = parser.add_argument_group("Experiment config")
-    exp.add_argument(
-        "--logdir",
-        type=str,
-        default='exps/',
-        help="experiment result's folder.",
-    )
     exp.add_argument(
         "--seed",
         type=int,
