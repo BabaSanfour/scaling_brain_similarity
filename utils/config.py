@@ -55,7 +55,6 @@ def get_config_parser():
         action="store_true",
         help="Adding data augmentation"
     )
-
     data.add_argument(
         "--no-data_aug", 
         dest="data_aug", 
@@ -63,7 +62,6 @@ def get_config_parser():
         help="Without data augmentation"
     )
     data.set_defaults(feature=False)
-    
     data.add_argument(
         "--times", 
         type=int, 
@@ -81,19 +79,12 @@ def get_config_parser():
         help="Path to model config json file"
     )
     model.add_argument(
-        "--model_name",
-        type=str,
-        default='resnet.pth',
-        help="Name of the model"
-    )
-    model.add_argument(
         "--model_type",
         type=str,
         default='resnet',
         choices=['resnet', 'vit'],
         help="Architecture selected."
     )
-
     model.add_argument(
         "--num_classes",
         type=int,
@@ -133,15 +124,12 @@ def get_config_parser():
         default=5e-4,
         help="weight decay (default: %(default)s).",
     )
-
-    optimization = parser.add_argument_group("Checkpoints")
     optimization.add_argument(
         "--load_checkpoint",
         dest="load_checkpoint", 
         action="store_true",
         help="If we will load a saved checkpoint and continue training.",
     )
-
     optimization.add_argument(
         "--no-load_checkpoint", 
         dest="load_checkpoint", 
@@ -163,13 +151,12 @@ def get_config_parser():
         default=42,
         help="random seed for repeatability (default: %(default)s).",
     )
-
-    misc = parser.add_argument_group("Miscellaneous")
-    misc.add_argument(
+    exp.add_argument(
         "--device",
         type=str,
         choices=["cpu", "cuda"],
         default="cuda",
         help="device to store tensors on (default: %(default)s).",
     )
+    
     return parser
