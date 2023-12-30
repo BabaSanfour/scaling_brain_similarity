@@ -135,7 +135,9 @@ class Trainer:
             self.model.train()
 
             # Iterate through batches in the training data
+            start_time = time.time()
             for source, targets in self.train_data:
+                pass
                 # Move data to the GPU
                 source = source.to(self.gpu_id)
                 targets = targets.to(self.gpu_id)
@@ -148,6 +150,11 @@ class Trainer:
                 running_loss += loss * batch_size
                 all_outputs.append(outputs)
                 all_labels.append(targets)
+            end_time = time.time()
+            loading_time = end_time - start_time
+
+            # Print or log the loading time
+            print(f"Data loading time: {loading_time:.2f} seconds")
 
             # Reduce and aggregate values across all GPUs
             total_correct = torch.tensor(n_corrects, dtype=torch.long, device=self.gpu_id)
@@ -284,6 +291,7 @@ class Trainer:
                 if valid_acc > best_acc:
                     best_acc = valid_acc
                     best_model = self.model.module
+        torch.cuda.empty_cache()
 
         # Finalize training and log results for GPU 0 only
         if self.gpu_id == 0:
@@ -341,6 +349,7 @@ class Trainer:
                 "Test Loss": avg_test_loss, 
                 "Test Accuracy": avg_test_acc
             })
+        torch.cuda.empty_cache()
 
 
 def load_train_objects(args, rank) -> tuple:
@@ -406,6 +415,9 @@ def load_train_objects(args, rank) -> tuple:
 
     # Initialize the loss function
     criterion = torch.nn.CrossEntropyLoss()
+
+    # Move criterion to GPU
+    criterion = criterion.to(rank)
 
     # Set the starting epoch for training
     starting_epoch = 0
