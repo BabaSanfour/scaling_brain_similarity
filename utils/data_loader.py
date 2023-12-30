@@ -10,23 +10,25 @@ class generate_Dataset_h5(Dataset):
     """ImageNet Dataset stored in hdf5 file"""
 
     def __init__(self, dir_path, transform=None):
-        self.file = h5py.File(dir_path, 'r')
-        self.n_images, self.nx, self.ny, self.nz = self.file['images'].shape
+        self.dir_path = dir_path
         self.transform = transform
 
     def __len__(self):
         """Number of images in the file"""
-        return self.n_images
+        with h5py.File(self.dir_path, 'r') as file:
+            return file['images'].shape[0]
 
     def __getitem__(self, idx):
         """Return the input image and the associated label"""
-        input_h5 = self.file['images'][idx, :, :, :]
-        label_h5 = self.file['meta'][idx]
-        sample = torch.from_numpy(input_h5.astype('uint8'))
-        label = torch.tensor(int(label_h5))
-        
+        with h5py.File(self.dir_path, 'r') as file:
+            input_h5 = file['images'][idx, :, :, :]
+            label_h5 = file['meta'][idx]
+
         if self.transform:
-            sample = self.transform(sample)
+            sample = self.transform(input_h5.astype('uint8'))
+
+        label = torch.tensor(int(label_h5))
+
 
         return sample, label
 
@@ -76,15 +78,15 @@ def dataloader(batch_n, scaling_fac=1, data_aug=False, times=1):
         train_sampler = DistributedSampler(train_dataset)
         valid_sampler = DistributedSampler(valid_dataset)
         test_sampler = DistributedSampler(test_dataset)
-
+    batch_n = batch_n * 4
     # Test dataset
     dataset_loader = {
-        'train': torch.utils.data.DataLoader(train_dataset, batch_size=batch_n, num_workers=0, shuffle=False,
-                                            sampler=train_sampler, pin_memory=True),
-        'valid': torch.utils.data.DataLoader(valid_dataset, batch_size=batch_n, num_workers=0, shuffle=False,
-                                            sampler=valid_sampler, pin_memory=True),
-        'test': torch.utils.data.DataLoader(test_dataset, batch_size=batch_n, num_workers=0, shuffle=False,
-                                           sampler=test_sampler, pin_memory=True)
+        'train': torch.utils.data.DataLoader(train_dataset, batch_size=batch_n, num_workers=1, shuffle=False,
+                                            sampler=train_sampler, pin_memory=True, drop_last=True),
+        'valid': torch.utils.data.DataLoader(valid_dataset, batch_size=batch_n, num_workers=1, shuffle=False,
+                                            sampler=valid_sampler, pin_memory=True, drop_last=True),
+        'test': torch.utils.data.DataLoader(test_dataset, batch_size=batch_n, num_workers=1, shuffle=False,
+                                           sampler=test_sampler, pin_memory=True, drop_last=True)
     }
 
     dataset_sizes = {'train': len(train_dataset), 'valid': len(valid_dataset), 'test': len(test_dataset)}
